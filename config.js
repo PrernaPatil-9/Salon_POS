@@ -8,9 +8,9 @@ const CONFIG = {
     version: '1.0.0',
     
     // Demo mode - set to false to use Google Sheets
-    demoMode: false,
+    demoMode: false, // Make sure this is set to false
     
- upiId: 'salon@okhdfcbank', // Replace with your actual UPI ID
+    upiId: 'salon@okhdfcbank', // Replace with your actual UPI ID
 
     // Sheet configuration
     servicesSheet: {
@@ -23,4 +23,3 @@ const CONFIG = {
         sheetName: 'salon_orders'
     }
 };
-

@@ -164,53 +164,74 @@ function setupPOSEventListeners() {
 // GOOGLE SHEETS INTEGRATION
 // ============================================
 
-// Load services from Google Sheets
+// Also update your loadServicesFromSheet function to ensure categories are set
 async function loadServicesFromSheet() {
     try {
         const servicesGrid = document.getElementById('services-grid');
         servicesGrid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading services...</div>';
         
         if (CONFIG.demoMode) {
-            // Load demo data
             setTimeout(() => {
                 loadDemoServices();
+                // After loading demo services, force render all categories
+                setTimeout(() => {
+                    renderCategories();
+                }, 100);
             }, 1000);
             return;
         }
         
-        // Fetch from Google Sheets
-        console.log('Fetching from:', CONFIG.servicesSheet.apiUrl);
         const response = await fetch(CONFIG.servicesSheet.apiUrl);
         const result = await response.json();
         console.log('Received data:', result);
         
         if (result.status === 'success' && result.data) {
-            // Map the data from Google Sheets to our service format
-            services = result.data.map(item => ({
-                id: Number(item.id),
-                name: String(item.name),
-                price: Number(item.price),
-                sku: String(item.sku || ''),
-                imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400',
-                discount: Number(item.discount) || 0,
-                category: String(item.category || getCategoryFromName(item.name)).toLowerCase()
-            }));
+            services = result.data.map(item => {
+                // Force category based on service name if not provided
+                let category = String(item.category || '').toLowerCase();
+                
+                // If category is missing, derive it from the name
+                if (!category || category === 'undefined' || category === 'null' || category === '') {
+                    category = getCategoryFromName(item.name);
+                }
+                
+                // Ensure category is one of our standard categories
+                const validCategories = ['hair', 'beard', 'skin', 'spa'];
+                if (!validCategories.includes(category)) {
+                    category = getCategoryFromName(item.name);
+                }
+                
+                console.log(`Service: ${item.name}, Assigned category: ${category}`);
+                
+                return {
+                    id: Number(item.id),
+                    name: String(item.name),
+                    price: Number(item.price),
+                    sku: String(item.sku || ''),
+                    imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400',
+                    discount: Number(item.discount) || 0,
+                    category: category
+                };
+            });
             
-            console.log('Mapped services:', services);
+            console.log('All services with categories:', services.map(s => ({name: s.name, category: s.category})));
+            
+            // Force render all categories
             renderCategories();
             renderServices();
             showToast('Services loaded successfully!');
         } else {
             console.error('Error loading services:', result.message);
-            loadDemoServices(); // Fallback to demo data
+            loadDemoServices();
         }
         
     } catch (error) {
         console.error('Error loading services:', error);
-        loadDemoServices(); // Fallback to demo data
+        loadDemoServices();
     }
 }
-// Demo services data with high-quality Unsplash images
+
+// Update your demo services to ensure categories are set
 function loadDemoServices() {
     services = [
         { id: 101, name: 'Premium Hair Cut', price: 499, sku: 'HC001', imageUrl: 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400', discount: 10, category: 'hair' },
@@ -227,9 +248,9 @@ function loadDemoServices() {
         { id: 112, name: 'Bridal Makeup', price: 4999, sku: 'BM001', imageUrl: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400', discount: 15, category: 'skin' }
     ];
     
+    console.log('Demo services loaded:', services);
     renderCategories();
     renderServices();
-    
 }
 
 // Determine category based on service name
@@ -248,9 +269,37 @@ function getCategoryFromName(name) {
 // RENDERING FUNCTIONS
 // ============================================
 
-// Render category tabs
+// Add this debug function to see what's happening
+function debugCategories() {
+    console.log('All services:', services);
+    const categories = services.map(s => s.category);
+    console.log('Raw categories:', categories);
+    const uniqueCategories = [...new Set(categories)];
+    console.log('Unique categories:', uniqueCategories);
+    
+    // Force show all category tabs even if categories are missing
+    const forcedCategories = ['all', 'hair', 'beard', 'skin', 'spa'];
+    console.log('Forced categories:', forcedCategories);
+    
+    return forcedCategories;
+}
+
+// Update your renderCategories function
 function renderCategories() {
-    const categories = ['all', ...new Set(services.map(s => s.category))];
+    // Get unique categories from services, but ensure we have all main categories
+    let categories = ['all'];
+    
+    // Add all standard categories even if no services have them yet
+    const standardCategories = ['hair', 'beard', 'skin', 'spa'];
+    
+    // Get actual categories from services
+    const serviceCategories = [...new Set(services.map(s => s.category))];
+    console.log('Service categories found:', serviceCategories);
+    
+    // Merge standard categories with service categories
+    const allCategories = [...new Set([...standardCategories, ...serviceCategories])];
+    categories = ['all', ...allCategories];
+    
     const categoryNames = {
         'all': 'All Services',
         'hair': 'Hair',
@@ -260,12 +309,19 @@ function renderCategories() {
     };
     
     const tabsContainer = document.getElementById('category-tabs');
-    tabsContainer.innerHTML = categories.map(cat => `
-        <button class="category-btn ${cat === currentCategory ? 'active' : ''}" 
-                onclick="filterByCategory('${cat}')">
-            ${categoryNames[cat] || cat}
-        </button>
-    `).join('');
+    tabsContainer.innerHTML = categories.map(cat => {
+        // Skip if category is empty or invalid
+        if (!cat || cat === 'undefined' || cat === 'null') return '';
+        
+        return `
+            <button class="category-btn ${cat === currentCategory ? 'active' : ''}" 
+                    onclick="filterByCategory('${cat}')">
+                ${categoryNames[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+        `;
+    }).join('');
+    
+    console.log('Rendered categories:', categories);
 }
 
 // Filter by category
@@ -868,7 +924,10 @@ function showQRCode(amount) {
 }
 
 // Process payment function
-function processPayment(paymentMethod, amount) {
+// Replace your existing processPayment function with this:
+
+// Process payment function with proper total calculation
+async function processPayment(paymentMethod, amount) {
     // Get customer details from cart section
     const customerName = document.getElementById('cart-customer-name').value.trim();
     const phoneNumber = document.getElementById('cart-customer-phone').value.trim();
@@ -893,7 +952,9 @@ function processPayment(paymentMethod, amount) {
     // Calculate totals
     const { subtotal, total } = calculateTotals();
     
-    // Prepare order data
+    console.log('Processing payment - Total:', total); // Debug log
+    
+    // Prepare order data - MATCHING YOUR SHEET STRUCTURE
     const orderData = {
         id: 'ORD' + Date.now(),
         timestamp: new Date().toISOString(),
@@ -901,46 +962,105 @@ function processPayment(paymentMethod, amount) {
             customerName: customerName,
             phoneNumber: phoneNumber
         },
+        staff: staffName,
+        paymentMethod: paymentMethod,
         items: cart.map(item => ({
             name: item.name,
             quantity: item.quantity,
             price: item.price,
             total: item.price * item.quantity
         })),
-        staff: staffName,
-        paymentMethod: paymentMethod,
         subtotal: subtotal,
+        discount: 0, // Explicitly set discount to 0
         total: total,
+        notes: '',
         user: currentUser.mobile
     };
     
-    // Save order
-    saveOrderToLocal(orderData);
+    // Show loading state
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const originalText = checkoutBtn.innerHTML;
+    checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    checkoutBtn.disabled = true;
     
-    // Show success
-    showToast(`Payment of ₹${total} received via ${paymentMethod}!`);
-    
-    // Show bill
-    showBill(orderData);
-    
-    // Clear cart
-    cart = [];
-    renderCart();
-    sessionStorage.removeItem('posCart');
-    document.getElementById('checkout-btn').disabled = true;
-    
-    // Clear customer fields
-    document.getElementById('cart-customer-name').value = '';
-    document.getElementById('cart-customer-phone').value = '';
-    document.getElementById('cart-staff-name').value = '';
-    
-    return true;
+    try {
+        // Save to Google Sheets (if not in demo mode)
+        if (!CONFIG.demoMode) {
+            const saveResult = await saveOrderToSheet(orderData);
+            if (!saveResult.success) {
+                throw new Error(saveResult.message || 'Failed to save order');
+            }
+            console.log('Order saved to Google Sheets:', saveResult);
+        }
+        
+        // Always save to local storage as backup
+        saveOrderToLocal(orderData);
+        
+        // Show success
+        showToast(`Payment of ₹${total} received via ${paymentMethod}!`);
+        
+        // Show bill
+        showBill(orderData);
+        
+        // Clear cart
+        cart = [];
+        renderCart();
+        sessionStorage.removeItem('posCart');
+        
+        // Clear customer fields
+        document.getElementById('cart-customer-name').value = '';
+        document.getElementById('cart-customer-phone').value = '';
+        document.getElementById('cart-staff-name').value = '';
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Error saving order:', error);
+        showToast('Error saving order. Please try again.');
+        
+        // Still show bill and clear cart for better UX
+        saveOrderToLocal(orderData);
+        showBill(orderData);
+        cart = [];
+        renderCart();
+        sessionStorage.removeItem('posCart');
+        
+        return false;
+    } finally {
+        // Reset button
+        checkoutBtn.innerHTML = originalText;
+        checkoutBtn.disabled = false;
+    }
 }
+// Replace your existing checkout button event listener with this:
 
 // Override the checkout button click handler
 document.getElementById('checkout-btn').addEventListener('click', function() {
     if (cart.length === 0) {
         showToast('Please add services to cart first');
+        return;
+    }
+    
+    // Validate customer details before proceeding
+    const customerName = document.getElementById('cart-customer-name').value.trim();
+    const phoneNumber = document.getElementById('cart-customer-phone').value.trim();
+    const staffName = document.getElementById('cart-staff-name').value;
+    
+    if (!customerName) {
+        showToast('Please enter customer name');
+        document.getElementById('cart-customer-name').focus();
+        return;
+    }
+    
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
+        showToast('Please enter a valid 10-digit phone number');
+        document.getElementById('cart-customer-phone').focus();
+        return;
+    }
+    
+    if (!staffName) {
+        showToast('Please select staff member');
+        document.getElementById('cart-staff-name').focus();
         return;
     }
     
@@ -962,6 +1082,38 @@ document.getElementById('checkout-btn').addEventListener('click', function() {
         processPayment('Cash', total);
     }
 });
+
+// Add this function to script.js:
+
+// Save order to Google Sheets
+async function saveOrderToSheet(orderData) {
+    try {
+        console.log('Saving order to Google Sheets:', orderData);
+        
+        // Prepare the data in the format expected by your Apps Script
+        const payload = {
+            action: 'saveOrder',
+            data: orderData
+        };
+        
+        // Using fetch with proper CORS handling
+        const response = await fetch(CONFIG.googleScriptUrl, {
+            method: 'POST',
+            mode: 'no-cors', // Important for Google Apps Script
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=saveOrder&data=' + encodeURIComponent(JSON.stringify(orderData))
+        });
+        
+        // With no-cors, we can't read the response, so assume success
+        return { success: true, message: 'Order sent to sheet' };
+        
+    } catch (error) {
+        console.error('Error in saveOrderToSheet:', error);
+        return { success: false, message: error.toString() };
+    }
+}
 
 // Make functions globally available
 window.addToCart = addToCart;
