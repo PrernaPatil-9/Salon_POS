@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon POS | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="pos-container">
+        <!-- Header -->
+        <header class="pos-header">
+            <div class="logo">
+                <i class="fas fa-cut"></i>
+                <h1>Unisex Salon POS</h1>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Search services...">
+                </div>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="user-mobile"></span>
+                    <button id="logout-btn" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main POS Area -->
+        <div class="pos-main">
+            <!-- LEFT SECTION: Services Grid -->
+            <div class="services-section">
+                <div class="category-tabs" id="category-tabs">
+                    <!-- Categories will be dynamically loaded -->
+                </div>
+                
+                <div class="services-grid" id="services-grid">
+                    <!-- Services will be dynamically loaded -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i> Loading services...
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SECTION: Cart Panel -->
+            <div class="cart-section">
+                <div class="cart-header">
+                    <h2><i class="fas fa-shopping-cart"></i> Current Bill</h2>
+                    <button id="clear-cart" class="clear-cart-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="cart-items" id="cart-items">
+                    <div class="empty-cart">
+                        <i class="fas fa-box-open"></i>
+                        <p>No services added yet</p>
+                    </div>
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">₹0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Discount:</span>
+                        <span id="discount-amount">-₹0</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="total-amount">₹0</span>
+                    </div>
+                    
+                    <button class="checkout-btn" id="checkout-btn" disabled>
+                        <i class="fas fa-arrow-right"></i> Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Modal -->
+        <div id="checkout-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Checkout Details</h2>
+                    <span class="close">&times;</span>
+                </div>
+                
+                <form id="checkout-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Customer Name *</label>
+                            <input type="text" id="customer-name" placeholder="Enter customer name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-phone"></i> Phone Number *</label>
+                            <input type="tel" id="customer-phone" placeholder="10-digit mobile number" maxlength="10" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user-tie"></i> Staff Name *</label>
+                            <select id="staff-name" required>
+                                <option value="">Select Staff</option>
+                                <option value="Amit (Hair Stylist)">Amit (Hair Stylist)</option>
+                                <option value="Priya (Beautician)">Priya (Beautician)</option>
+                                <option value="Raj (Barber)">Raj (Barber)</option>
+                                <option value="Neha (Spa Specialist)">Neha (Spa Specialist)</option>
+                                <option value="Vikram (Colorist)">Vikram (Colorist)</option>
+                                <option value="Sunita (Makeup)">Sunita (Makeup)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-credit-card"></i> Payment Method *</label>
+                            <select id="payment-method" required>
+                                <option value="">Select Payment</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Online">Online (UPI/Card)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="order-summary">
+                        <h3>Order Summary</h3>
+                        <div id="order-items-list" class="order-items-list"></div>
+                        <div class="order-totals">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span id="modal-subtotal">₹0</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Discount:</span>
+                                <span id="modal-discount">-₹0</span>
+                            </div>
+                            <div class="total-row grand-total">
+                                <span>Total Amount:</span>
+                                <span id="modal-total">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeCheckoutModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-check"></i> Complete Booking
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bill Modal -->
+        <div id="bill-modal" class="modal">
+            <div class="modal-content bill-content">
+                <div class="modal-header">
+                    <h2>Bill Receipt</h2>
+                    <button class="print-btn" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+                
+                <div id="bill-details" class="bill-details"></div>
+                
+                <div class="modal-footer">
+                    <button class="close-btn" onclick="closeBillModal()">
+                        <i class="fas fa-check"></i> Done
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

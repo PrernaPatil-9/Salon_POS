@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon POS | Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <i class="fas fa-cut"></i>
+                <h1>Unisex Salon POS</h1>
+                <p>Enter mobile number to continue</p>
+            </div>
+            
+            <div class="login-form">
+                <div class="input-group">
+                    <i class="fas fa-mobile-alt"></i>
+                    <input type="tel" id="mobile-number" placeholder="Mobile Number" maxlength="10">
+                </div>
+                
+                <button id="login-btn" class="login-btn">
+                    <i class="fas fa-arrow-right"></i> Login
+                </button>
+                
+                <div id="login-message" class="login-message"></div>
+                
+                <div class="demo-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Demo: Use any 10-digit number</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
