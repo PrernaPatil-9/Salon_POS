@@ -382,7 +382,8 @@
     box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3);
 }
 
-/* Cart Section */
+/* Updated Cart Section Styles - Add/Replace these in your CSS */
+
 .cart-section {
     flex: 1;
     background: white;
@@ -390,79 +391,64 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    min-width: 350px;
+    min-width: 380px;
     max-width: 450px;
+    height: 100%;
     overflow: hidden;
+    position: relative;
 }
 
 .cart-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
+    padding: 1.2rem 1.5rem;
     border-bottom: 2px solid #f5e6d3;
     flex-shrink: 0;
-}
-
-.cart-header h2 {
-    color: #5a3e2b;
-    font-size: 1.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.cart-header h2 i {
-    color: #c39a6b;
-}
-
-.clear-cart-btn {
-    background: none;
-    border: none;
-    color: #ff9f9f;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 5px;
-    transition: all 0.2s;
-}
-
-.clear-cart-btn:hover {
-    color: #ff6b6b;
-    background: #fff0f0;
+    background: white;
+    z-index: 2;
 }
 
 .cart-items {
     flex: 1;
-    padding: 1rem;
+    padding: 1rem 1.5rem;
     overflow-y: auto;
-    min-height: 0;
+    min-height: 150px;
+    max-height: 300px;
+    background: #fffaf5;
 }
 
-.empty-cart {
-    text-align: center;
-    color: #c39a6b;
-    padding: 3rem 1rem;
+/* Scrollbar styling for cart items */
+.cart-items::-webkit-scrollbar {
+    width: 6px;
 }
 
-.empty-cart i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.3;
+.cart-items::-webkit-scrollbar-track {
+    background: #f5e6d3;
+    border-radius: 10px;
+}
+
+.cart-items::-webkit-scrollbar-thumb {
+    background: #c39a6b;
+    border-radius: 10px;
+}
+
+.cart-items::-webkit-scrollbar-thumb:hover {
+    background: #8b5a2b;
 }
 
 .cart-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8rem;
-    border-bottom: 1px solid #f5e6d3;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #e6d5b8;
     transition: background 0.2s;
     gap: 0.5rem;
 }
 
-.cart-item:hover {
-    background: #fffaf5;
+.cart-item:last-child {
+    border-bottom: none;
 }
 
 .cart-item-info {
@@ -481,7 +467,7 @@
 
 .cart-item-details {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
     font-size: 0.9rem;
 }
 
@@ -490,45 +476,48 @@
     font-weight: 600;
 }
 
-.item-discount {
-    color: #ff6b6b;
-    font-size: 0.8rem;
-}
-
 .item-quantity {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
     flex-shrink: 0;
+    background: #f5e6d3;
+    padding: 0.3rem;
+    border-radius: 8px;
 }
 
 .qty-btn {
-    background: none;
-    border: 1px solid #f5e6d3;
-    width: 25px;
-    height: 25px;
-    border-radius: 5px;
+    background: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
     cursor: pointer;
     color: #5a3e2b;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .qty-btn:hover {
-    background: #f5e6d3;
+    background: #c39a6b;
+    color: white;
 }
 
 .qty-value {
-    min-width: 30px;
+    min-width: 25px;
     text-align: center;
+    font-weight: 600;
+    color: #5a3e2b;
 }
 
 .remove-item {
     color: #ff9f9f;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     padding: 5px;
     transition: color 0.2s;
     flex-shrink: 0;
@@ -538,18 +527,61 @@
     color: #ff6b6b;
 }
 
-.cart-summary {
-    padding: 1.5rem;
+/* Customer Details Section */
+.customer-details-section {
+    padding: 1rem 1.5rem;
     border-top: 2px solid #f5e6d3;
-    background: #fffaf5;
-    border-radius: 0 0 20px 20px;
+    border-bottom: 2px solid #f5e6d3;
+    background: white;
     flex-shrink: 0;
+}
+
+.customer-details-section h3 {
+    color: #5a3e2b;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.customer-details-section h3 i {
+    color: #c39a6b;
+}
+
+.customer-input-group {
+    margin-bottom: 0.8rem;
+}
+
+.customer-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #f5e6d3;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    background: white;
+}
+
+.customer-input:focus {
+    outline: none;
+    border-color: #c39a6b;
+    box-shadow: 0 0 0 3px rgba(195, 154, 107, 0.2);
+}
+
+/* Cart Summary - Make this section scrollable if needed */
+.cart-summary {
+    padding: 1rem 1.5rem 1.2rem;
+    background: white;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px; /* Ensure enough space for payment methods */
 }
 
 .summary-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     color: #5a3e2b;
     font-size: 0.95rem;
 }
@@ -559,14 +591,141 @@
     font-weight: 700;
     color: #8b5a2b;
     border-top: 2px solid #e6d5b8;
-    padding-top: 1rem;
+    padding-top: 0.8rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+/* Payment Method Section - Make it prominent */
+.payment-method-section {
+    margin: 0.5rem 0 0.8rem;
+    padding: 0.5rem 0;
+    border-top: 2px solid #f5e6d3;
+    border-bottom: 2px solid #f5e6d3;
+    background: #fffaf5;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.payment-method-section h3 {
+    color: #5a3e2b;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.payment-options {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.3rem 0 0.8rem 0;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Make payment options more visible */
+.payment-options::-webkit-scrollbar {
+    height: 6px;
+}
+
+.payment-options::-webkit-scrollbar-track {
+    background: #e6d5b8;
+    border-radius: 10px;
+}
+
+.payment-options::-webkit-scrollbar-thumb {
+    background: #c39a6b;
+    border-radius: 10px;
+}
+
+.payment-option {
+    flex: 0 0 auto;
+    min-width: 90px;
+}
+
+.payment-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.7rem 0.8rem;
+    background: white;
+    border: 2px solid #f5e6d3;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #5a3e2b;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.payment-label i {
+    font-size: 1.3rem;
+    color: #c39a6b;
+}
+
+.payment-option input[type="radio"]:checked + .payment-label {
+    background: #c39a6b;
+    color: white;
+    border-color: #8b5a2b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(195, 154, 107, 0.3);
+}
+
+.payment-option input[type="radio"]:checked + .payment-label i {
+    color: white;
+}
+
+.checkout-btn {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, #8b5a2b, #c39a6b);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     margin-top: 0.5rem;
 }
 
-#discount-amount {
-    color: #ff6b6b;
+/* Fix for small screens */
+@media (max-width: 1200px) {
+    .cart-section {
+        max-height: 600px;
+    }
+    
+    .cart-summary {
+        max-height: 300px;
+    }
 }
 
+@media (max-width: 768px) {
+    .cart-section {
+        min-width: 100%;
+        max-height: 500px;
+    }
+    
+    .cart-items {
+        max-height: 150px;
+    }
+    
+    .payment-options {
+        gap: 0.5rem;
+    }
+    
+    .payment-option {
+        min-width: 80px;
+    }
+}
 .checkout-btn {
     width: 100%;
     padding: 1rem;
@@ -582,7 +741,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .checkout-btn:hover:not(:disabled) {
@@ -595,6 +754,38 @@
     cursor: not-allowed;
 }
 
+/* Empty cart state */
+.empty-cart {
+    text-align: center;
+    color: #c39a6b;
+    padding: 2rem 1rem;
+}
+
+.empty-cart i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+/* Toast positioning */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #5a3e2b;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+    font-weight: 500;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
 /* Modal Styles */
 .modal {
     display: none;
@@ -1005,3 +1196,237 @@
         min-height: auto;
     }
 }
+
+/* Add these styles to your existing CSS file */
+
+/* Customer Details Section */
+.customer-details-section {
+    padding: 1rem 1.5rem;
+    border-top: 2px solid #f5e6d3;
+    background: #fffaf5;
+}
+
+.customer-details-section h3 {
+    color: #5a3e2b;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.customer-details-section h3 i {
+    color: #c39a6b;
+}
+
+.customer-input-group {
+    margin-bottom: 0.8rem;
+}
+
+.customer-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #f5e6d3;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    background: white;
+}
+
+.customer-input:focus {
+    outline: none;
+    border-color: #c39a6b;
+    box-shadow: 0 0 0 3px rgba(195, 154, 107, 0.2);
+}
+
+/* Payment Method Section */
+.payment-method-section {
+    margin: 1rem 0;
+    padding: 1rem 0;
+    border-top: 2px solid #f5e6d3;
+}
+
+.payment-method-section h3 {
+    color: #5a3e2b;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.payment-method-section h3 i {
+    color: #c39a6b;
+}
+
+.payment-options {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.payment-option {
+    flex: 1;
+    min-width: 80px;
+}
+
+.payment-option input[type="radio"] {
+    display: none;
+}
+
+.payment-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.8rem;
+    background: #f5e6d3;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #5a3e2b;
+    font-size: 0.9rem;
+}
+
+.payment-label i {
+    font-size: 1.5rem;
+    color: #c39a6b;
+}
+
+.payment-option input[type="radio"]:checked + .payment-label {
+    background: #c39a6b;
+    color: white;
+    border-color: #8b5a2b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(195, 154, 107, 0.3);
+}
+
+.payment-option input[type="radio"]:checked + .payment-label i {
+    color: white;
+}
+
+/* QR Code Modal */
+.qr-modal {
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-qr {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    color: #c39a6b;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.close-qr:hover {
+    color: #8b5a2b;
+}
+
+.qr-code-container {
+    margin: 2rem 0;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+.qr-code-container img {
+    width: 200px;
+    height: 200px;
+    display: block;
+}
+
+.qr-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #8b5a2b;
+    margin: 1rem 0;
+}
+
+.qr-instruction {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.qr-paid-btn {
+    background: linear-gradient(135deg, #6b8e4c, #8cb369);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.qr-paid-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(107, 142, 76, 0.3);
+}
+
+/* Update cart summary styles */
+.cart-summary {
+    padding: 0 1.5rem 1.5rem;
+    border-top: none;
+    background: transparent;
+}
+
+.summary-row {
+    padding: 0.3rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .payment-options {
+        flex-direction: column;
+    }
+    
+    .payment-option {
+        width: 100%;
+    }
+}
+

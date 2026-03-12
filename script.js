@@ -9,6 +9,33 @@ let currentCategory = 'all';
 let currentUser = null;
 let searchTimeout = null;
 
+// Initialize POS Page
+function initPOSPage() {
+    // Check if user is logged in
+    const userData = sessionStorage.getItem('posUser');
+    if (!userData) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    currentUser = JSON.parse(userData);
+    document.getElementById('user-mobile').textContent = currentUser.mobile;
+    
+    // Debug: Check CONFIG
+    console.log('CONFIG:', CONFIG);
+    console.log('Demo Mode:', CONFIG.demoMode);
+    console.log('Services URL:', CONFIG.servicesSheet?.apiUrl);
+    
+    // Load services
+    loadServicesFromSheet();
+    
+    // Setup event listeners
+    setupPOSEventListeners();
+    
+    // Load cart from session
+    loadCartFromSession();
+}
+
 // ============================================
 // PAGE INITIALIZATION
 // ============================================
@@ -152,31 +179,37 @@ async function loadServicesFromSheet() {
         }
         
         // Fetch from Google Sheets
+        console.log('Fetching from:', CONFIG.servicesSheet.apiUrl);
         const response = await fetch(CONFIG.servicesSheet.apiUrl);
-        const data = await response.json();
+        const result = await response.json();
+        console.log('Received data:', result);
         
-        // Parse data based on your sheet structure
-        // Assuming columns: Service ID, Name, Price, SKU, Image URL, Discount, Category
-        services = data.map(row => ({
-            id: row[0],
-            name: row[1],
-            price: parseFloat(row[2]),
-            sku: row[3],
-            imageUrl: row[4] || 'assets/images/default-service.jpg',
-            discount: parseInt(row[5]) || 0,
-            category: row[6] || getCategoryFromName(row[1])
-        }));
-        
-        renderCategories();
-        renderServices();
-        showToast('Services loaded successfully!');
+        if (result.status === 'success' && result.data) {
+            // Map the data from Google Sheets to our service format
+            services = result.data.map(item => ({
+                id: Number(item.id),
+                name: String(item.name),
+                price: Number(item.price),
+                sku: String(item.sku || ''),
+                imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400',
+                discount: Number(item.discount) || 0,
+                category: String(item.category || getCategoryFromName(item.name)).toLowerCase()
+            }));
+            
+            console.log('Mapped services:', services);
+            renderCategories();
+            renderServices();
+            showToast('Services loaded successfully!');
+        } else {
+            console.error('Error loading services:', result.message);
+            loadDemoServices(); // Fallback to demo data
+        }
         
     } catch (error) {
         console.error('Error loading services:', error);
-        loadDemoServices();
+        loadDemoServices(); // Fallback to demo data
     }
 }
-
 // Demo services data with high-quality Unsplash images
 function loadDemoServices() {
     services = [
@@ -196,7 +229,7 @@ function loadDemoServices() {
     
     renderCategories();
     renderServices();
-    showToast('Using demo services - Connect Google Sheets for live data');
+    
 }
 
 // Determine category based on service name
@@ -359,6 +392,8 @@ function clearCart() {
     }
 }
 
+// Replace your existing calculateTotals function with this:
+
 // Calculate totals with discounts
 function calculateTotals() {
     let subtotal = 0;
@@ -368,20 +403,26 @@ function calculateTotals() {
         const itemTotal = item.price * item.quantity;
         subtotal += itemTotal;
         
-        if (item.discount > 0) {
-            totalDiscount += (itemTotal * item.discount / 100);
-        }
+        // Commented out discount calculation as requested
+        // if (item.discount > 0) {
+        //     totalDiscount += (itemTotal * item.discount / 100);
+        // }
     });
     
-    const total = subtotal - totalDiscount;
+    // Since discount is commented out, total equals subtotal
+    const total = subtotal; // - totalDiscount;
+    
+    console.log('Calculating totals:', { subtotal, total }); // Debug log
     
     return { subtotal, totalDiscount, total };
 }
 
-// Render cart
+// Update the renderCart function to ensure total is displayed correctly
 function renderCart() {
     const cartContainer = document.getElementById('cart-items');
     const { subtotal, totalDiscount, total } = calculateTotals();
+    
+    console.log('Rendering cart with total:', total); // Debug log
     
     if (cart.length === 0) {
         cartContainer.innerHTML = `
@@ -393,8 +434,9 @@ function renderCart() {
     } else {
         cartContainer.innerHTML = cart.map((item, index) => {
             const itemTotal = item.price * item.quantity;
-            const discountAmount = item.discount > 0 ? (itemTotal * item.discount / 100) : 0;
-            const finalPrice = itemTotal - discountAmount;
+            // Commented out discount display
+            // const discountAmount = item.discount > 0 ? (itemTotal * item.discount / 100) : 0;
+            // const finalPrice = itemTotal - discountAmount;
             
             return `
                 <div class="cart-item">
@@ -402,7 +444,9 @@ function renderCart() {
                         <h4>${item.name}</h4>
                         <div class="cart-item-details">
                             <span class="item-price">₹${item.price}</span>
-                            ${item.discount > 0 ? `<span class="item-discount">-${item.discount}%</span>` : ''}
+                            ${item.quantity > 1 ? `<span class="item-price">x${item.quantity} = ₹${itemTotal}</span>` : ''}
+                            <!-- Discount section commented out -->
+                            <!-- ${item.discount > 0 ? `<span class="item-discount">-${item.discount}%</span>` : ''} -->
                         </div>
                     </div>
                     <div class="item-quantity">
@@ -422,11 +466,157 @@ function renderCart() {
         }).join('');
     }
     
-    // Update summary
-    document.getElementById('subtotal').textContent = `₹${subtotal}`;
-    document.getElementById('discount-amount').textContent = `-₹${totalDiscount}`;
-    document.getElementById('total-amount').textContent = `₹${total}`;
+    // Update summary - ensure values are numbers
+    document.getElementById('subtotal').textContent = `₹${Number(subtotal).toFixed(0)}`;
+    // document.getElementById('discount-amount').textContent = `-₹${Number(totalDiscount).toFixed(0)}`;
+    document.getElementById('total-amount').textContent = `₹${Number(total).toFixed(0)}`;
+    
+    // Update checkout button state
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = cart.length === 0;
+    }
 }
+
+// Add this function to ensure cart updates properly when items are added
+function addToCart(serviceId) {
+    const service = services.find(s => s.id === serviceId);
+    if (!service) return;
+    
+    console.log('Adding to cart:', service); // Debug log
+    
+    // Check if already in cart
+    const existingItem = cart.find(item => item.id === serviceId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({
+            id: service.id,
+            name: service.name,
+            price: service.price,
+            // discount: service.discount, // Commented out discount
+            quantity: 1,
+            sku: service.sku
+        });
+    }
+    
+    renderCart();
+    saveCartToSession();
+    showToast(`${service.name} added to cart!`);
+}
+
+// Update quantity function
+function updateQuantity(index, change) {
+    if (cart[index].quantity + change > 0) {
+        cart[index].quantity += change;
+    } else {
+        removeFromCart(index);
+        return;
+    }
+    
+    renderCart();
+    saveCartToSession();
+}
+
+// Process payment function with proper total calculation
+function processPayment(paymentMethod, amount) {
+    // Get customer details from cart section
+    const customerName = document.getElementById('cart-customer-name').value.trim();
+    const phoneNumber = document.getElementById('cart-customer-phone').value.trim();
+    const staffName = document.getElementById('cart-staff-name').value;
+    
+    // Validate required fields
+    if (!customerName) {
+        showToast('Please enter customer name');
+        return false;
+    }
+    
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
+        showToast('Please enter a valid 10-digit phone number');
+        return false;
+    }
+    
+    if (!staffName) {
+        showToast('Please select staff member');
+        return false;
+    }
+    
+    // Calculate totals
+    const { subtotal, total } = calculateTotals();
+    
+    console.log('Processing payment - Total:', total); // Debug log
+    
+    // Prepare order data
+    const orderData = {
+        id: 'ORD' + Date.now(),
+        timestamp: new Date().toISOString(),
+        customer: {
+            customerName: customerName,
+            phoneNumber: phoneNumber
+        },
+        items: cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.price * item.quantity
+        })),
+        staff: staffName,
+        paymentMethod: paymentMethod,
+        subtotal: subtotal,
+        total: total,
+        user: currentUser.mobile
+    };
+    
+    // Save order
+    saveOrderToLocal(orderData);
+    
+    // Show success
+    showToast(`Payment of ₹${total} received via ${paymentMethod}!`);
+    
+    // Show bill
+    showBill(orderData);
+    
+    // Clear cart
+    cart = [];
+    renderCart();
+    sessionStorage.removeItem('posCart');
+    
+    // Clear customer fields
+    document.getElementById('cart-customer-name').value = '';
+    document.getElementById('cart-customer-phone').value = '';
+    document.getElementById('cart-staff-name').value = '';
+    
+    return true;
+}
+
+// Checkout button click handler
+document.getElementById('checkout-btn').addEventListener('click', function() {
+    if (cart.length === 0) {
+        showToast('Please add services to cart first');
+        return;
+    }
+    
+    // Get selected payment method
+    const selectedPayment = document.querySelector('input[name="payment-method"]:checked');
+    if (!selectedPayment) {
+        showToast('Please select a payment method');
+        return;
+    }
+    
+    const paymentMethod = selectedPayment.value;
+    const { total } = calculateTotals();
+    
+    console.log('Checkout - Total amount:', total); // Debug log
+    
+    if (paymentMethod === 'GPay' || paymentMethod === 'UPI') {
+        // Show QR code for UPI/GPay payments
+        showQRCode(total);
+    } else {
+        // Process cash payment directly
+        processPayment('Cash', total);
+    }
+});
 
 // Save cart to session storage
 function saveCartToSession() {
@@ -449,43 +639,6 @@ function loadCartFromSession() {
 // CHECKOUT FUNCTIONS
 // ============================================
 
-// Open checkout modal
-function openCheckoutModal() {
-    if (cart.length === 0) {
-        showToast('Please add services to cart first');
-        return;
-    }
-    
-    // Populate order summary
-    const orderItemsList = document.getElementById('order-items-list');
-    const { subtotal, totalDiscount, total } = calculateTotals();
-    
-    orderItemsList.innerHTML = cart.map(item => {
-        const itemTotal = item.price * item.quantity;
-        const discountAmount = item.discount > 0 ? (itemTotal * item.discount / 100) : 0;
-        const finalPrice = itemTotal - discountAmount;
-        
-        return `
-            <div class="order-item">
-                <span>${item.name} x${item.quantity}</span>
-                <span>₹${finalPrice}</span>
-            </div>
-        `;
-    }).join('');
-    
-    // Update modal totals
-    document.getElementById('modal-subtotal').textContent = `₹${subtotal}`;
-    document.getElementById('modal-discount').textContent = `-₹${totalDiscount}`;
-    document.getElementById('modal-total').textContent = `₹${total}`;
-    
-    document.getElementById('checkout-modal').style.display = 'block';
-}
-
-// Close checkout modal
-function closeCheckoutModal() {
-    document.getElementById('checkout-modal').style.display = 'none';
-    document.getElementById('checkout-form').reset();
-}
 
 // Close bill modal
 function closeBillModal() {
@@ -546,16 +699,26 @@ async function handleCheckout(event) {
     
     try {
         if (!CONFIG.demoMode) {
-            // Send to Google Sheets
-            await fetch(CONFIG.ordersSheet.apiUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
-        }
+    // Send to Google Sheets
+    console.log('Sending order to:', CONFIG.ordersSheet.apiUrl);
+    
+    // For Google Apps Script, we need to use POST with the action parameter
+    const response = await fetch(CONFIG.googleScriptUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=saveOrder&data=' + encodeURIComponent(JSON.stringify(orderData))
+    });
+    
+    // Try to get response (but it might be opaque with no-cors)
+    try {
+        const result = await response.json();
+        console.log('Order saved:', result);
+    } catch (e) {
+        console.log('Order sent (response not parsed)');
+    }
+}
         
         // Save to local storage for demo
         saveOrderToLocal(orderData);
@@ -653,6 +816,153 @@ function showToast(message) {
     }, 3000);
 }
 
+
+
+
+// Add these functions to your existing script.js
+
+// Updated showQRCode function with actual QR generation
+function showQRCode(amount) {
+    const qrModal = document.getElementById('qr-modal');
+    const qrContainer = document.getElementById('qr-code-container');
+    const qrAmount = document.getElementById('qr-amount');
+    
+    qrAmount.textContent = amount;
+    
+    // Generate UPI payment link
+    const upiId = CONFIG.upiId || 'salon@okhdfcbank';
+    const upiLink = `upi://pay?pa=${upiId}&pn=Unisex%20Salon&am=${amount}&cu=INR`;
+    
+    // Clear previous QR code
+    qrContainer.innerHTML = '';
+    
+    // Generate QR code
+    QRCode.toCanvas(upiLink, { width: 200 }, function(error, canvas) {
+        if (error) {
+            console.error('QR generation failed:', error);
+            qrContainer.innerHTML = '<p>Error generating QR code</p>';
+            return;
+        }
+        qrContainer.appendChild(canvas);
+    });
+    
+    qrModal.style.display = 'flex';
+    
+    // Setup close button
+    document.querySelector('.close-qr').onclick = function() {
+        qrModal.style.display = 'none';
+    };
+    
+    // Setup paid button
+    document.getElementById('qr-paid-btn').onclick = function() {
+        qrModal.style.display = 'none';
+        processPayment('UPI', amount);
+    };
+    
+    // Click outside to close
+    window.onclick = function(event) {
+        if (event.target === qrModal) {
+            qrModal.style.display = 'none';
+        }
+    };
+}
+
+// Process payment function
+function processPayment(paymentMethod, amount) {
+    // Get customer details from cart section
+    const customerName = document.getElementById('cart-customer-name').value.trim();
+    const phoneNumber = document.getElementById('cart-customer-phone').value.trim();
+    const staffName = document.getElementById('cart-staff-name').value;
+    
+    // Validate required fields
+    if (!customerName) {
+        showToast('Please enter customer name');
+        return false;
+    }
+    
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
+        showToast('Please enter a valid 10-digit phone number');
+        return false;
+    }
+    
+    if (!staffName) {
+        showToast('Please select staff member');
+        return false;
+    }
+    
+    // Calculate totals
+    const { subtotal, total } = calculateTotals();
+    
+    // Prepare order data
+    const orderData = {
+        id: 'ORD' + Date.now(),
+        timestamp: new Date().toISOString(),
+        customer: {
+            customerName: customerName,
+            phoneNumber: phoneNumber
+        },
+        items: cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.price * item.quantity
+        })),
+        staff: staffName,
+        paymentMethod: paymentMethod,
+        subtotal: subtotal,
+        total: total,
+        user: currentUser.mobile
+    };
+    
+    // Save order
+    saveOrderToLocal(orderData);
+    
+    // Show success
+    showToast(`Payment of ₹${total} received via ${paymentMethod}!`);
+    
+    // Show bill
+    showBill(orderData);
+    
+    // Clear cart
+    cart = [];
+    renderCart();
+    sessionStorage.removeItem('posCart');
+    document.getElementById('checkout-btn').disabled = true;
+    
+    // Clear customer fields
+    document.getElementById('cart-customer-name').value = '';
+    document.getElementById('cart-customer-phone').value = '';
+    document.getElementById('cart-staff-name').value = '';
+    
+    return true;
+}
+
+// Override the checkout button click handler
+document.getElementById('checkout-btn').addEventListener('click', function() {
+    if (cart.length === 0) {
+        showToast('Please add services to cart first');
+        return;
+    }
+    
+    // Get selected payment method
+    const selectedPayment = document.querySelector('input[name="payment-method"]:checked');
+    if (!selectedPayment) {
+        showToast('Please select a payment method');
+        return;
+    }
+    
+    const paymentMethod = selectedPayment.value;
+    const { total } = calculateTotals();
+    
+    if (paymentMethod === 'GPay' || paymentMethod === 'UPI') {
+        // Show QR code for UPI/GPay payments
+        showQRCode(total);
+    } else {
+        // Process cash payment directly
+        processPayment('Cash', total);
+    }
+});
+
 // Make functions globally available
 window.addToCart = addToCart;
 window.updateQuantity = updateQuantity;
@@ -660,3 +970,5 @@ window.removeFromCart = removeFromCart;
 window.filterByCategory = filterByCategory;
 window.closeCheckoutModal = closeCheckoutModal;
 window.closeBillModal = closeBillModal;
+
+
