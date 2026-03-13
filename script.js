@@ -8,6 +8,7 @@ let cart = [];
 let currentCategory = 'all';
 let currentUser = null;
 let searchTimeout = null;
+let isProcessingPayment = false;
 
 // Initialize POS Page
 function initPOSPage() {
@@ -647,9 +648,33 @@ function processPayment(paymentMethod, amount) {
 }
 
 // Checkout button click handler
+// Replace the existing checkout button click handler with this:
 document.getElementById('checkout-btn').addEventListener('click', function() {
     if (cart.length === 0) {
         showToast('Please add services to cart first');
+        return;
+    }
+    
+    // Validate customer details before proceeding
+    const customerName = document.getElementById('cart-customer-name').value.trim();
+    const phoneNumber = document.getElementById('cart-customer-phone').value.trim();
+    const staffName = document.getElementById('cart-staff-name').value;
+    
+    if (!customerName) {
+        showToast('Please enter customer name');
+        document.getElementById('cart-customer-name').focus();
+        return;
+    }
+    
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
+        showToast('Please enter a valid 10-digit phone number');
+        document.getElementById('cart-customer-phone').focus();
+        return;
+    }
+    
+    if (!staffName) {
+        showToast('Please select staff member');
+        document.getElementById('cart-staff-name').focus();
         return;
     }
     
@@ -663,15 +688,8 @@ document.getElementById('checkout-btn').addEventListener('click', function() {
     const paymentMethod = selectedPayment.value;
     const { total } = calculateTotals();
     
-    console.log('Checkout - Total amount:', total); // Debug log
-    
-    if (paymentMethod === 'GPay' || paymentMethod === 'UPI') {
-        // Show QR code for UPI/GPay payments
-        showQRCode(total);
-    } else {
-        // Process cash payment directly
-        processPayment('Cash', total);
-    }
+    // Process payment directly for ALL payment methods (no QR code)
+    processPayment(paymentMethod, total);
 });
 
 // Save cart to session storage
@@ -1124,3 +1142,218 @@ window.closeCheckoutModal = closeCheckoutModal;
 window.closeBillModal = closeBillModal;
 
 
+// Replace your entire loadServicesFromSheet function with this:
+async function loadServicesFromSheet() {
+    try {
+        const servicesGrid = document.getElementById('services-grid');
+        servicesGrid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading services...</div>';
+        
+        if (CONFIG.demoMode) {
+            setTimeout(() => {
+                loadDemoServices();
+                setTimeout(() => {
+                    renderCategories();
+                    renderServices();
+                }, 100);
+            }, 1000);
+            return;
+        }
+        
+        const response = await fetch(CONFIG.servicesSheet.apiUrl);
+        const result = await response.json();
+        console.log('Received data:', result);
+        
+        if (result.status === 'success' && result.data) {
+            // Map the data and force categories based on service names
+            services = result.data.map(item => {
+                const serviceName = String(item.name || '').toLowerCase();
+                let category = 'hair'; // default category
+                
+                // Determine category based on service name keywords
+                if (serviceName.includes('hair cut') || serviceName.includes('haircut') || 
+                    serviceName.includes('hair color') || serviceName.includes('hair style') || 
+                    serviceName.includes('hair spa') || serviceName.includes('hair')) {
+                    category = 'hair';
+                } else if (serviceName.includes('beard') || serviceName.includes('shave') || 
+                          serviceName.includes('trim')) {
+                    category = 'beard';
+                } else if (serviceName.includes('facial') || serviceName.includes('cleanup') || 
+                          serviceName.includes('manicure') || serviceName.includes('pedicure') || 
+                          serviceName.includes('thread') || serviceName.includes('wax') || 
+                          serviceName.includes('makeup') || serviceName.includes('skin')) {
+                    category = 'skin';
+                } else if (serviceName.includes('spa') || serviceName.includes('massage') || 
+                          serviceName.includes('aroma') || serviceName.includes('therapy')) {
+                    category = 'spa';
+                }
+                
+                console.log(`Service: ${item.name} -> Category: ${category}`);
+                
+                return {
+                    id: Number(item.id),
+                    name: String(item.name),
+                    price: Number(item.price),
+                    sku: String(item.sku || ''),
+                    imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400',
+                    discount: Number(item.discount) || 0,
+                    category: category
+                };
+            });
+            
+            console.log('All services with categories:', services);
+            
+            // Force render categories and services
+            renderCategories();
+            renderServices();
+            showToast('Services loaded successfully!');
+        } else {
+            console.error('Error loading services:', result.message);
+            loadDemoServices();
+        }
+        
+    } catch (error) {
+        console.error('Error loading services:', error);
+        loadDemoServices();
+    }
+}
+
+// Replace your renderCategories function:
+function renderCategories() {
+    console.log('Rendering categories. Services:', services);
+    
+    // Always show all category tabs regardless of what's in services
+    const categories = ['all', 'hair', 'beard', 'skin', 'spa'];
+    
+    const categoryNames = {
+        'all': 'All Services',
+        'hair': 'Hair',
+        'beard': 'Beard',
+        'skin': 'Skin',
+        'spa': 'Spa'
+    };
+    
+    const tabsContainer = document.getElementById('category-tabs');
+    
+    if (!tabsContainer) {
+        console.error('Category tabs container not found!');
+        return;
+    }
+    
+    tabsContainer.innerHTML = categories.map(cat => {
+        return `
+            <button class="category-btn ${cat === currentCategory ? 'active' : ''}" 
+                    onclick="filterByCategory('${cat}')">
+                ${categoryNames[cat]}
+            </button>
+        `;
+    }).join('');
+    
+    console.log('Categories rendered');
+}
+
+// Replace your filterByCategory function:
+function filterByCategory(category) {
+    console.log('Filtering by category:', category);
+    currentCategory = category;
+    
+    // Update active state on buttons
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        if (btn.getAttribute('onclick')?.includes(`'${category}'`)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Filter and render services
+    filterServices();
+}
+
+// Replace your filterServices function:
+function filterServices() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    let filtered = services;
+    
+    // Apply category filter
+    if (currentCategory !== 'all') {
+        filtered = services.filter(service => {
+            return service.category === currentCategory;
+        });
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+        filtered = filtered.filter(service => 
+            service.name.toLowerCase().includes(searchTerm) ||
+            (service.sku && service.sku.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    console.log(`Filtered services for category ${currentCategory}:`, filtered.length);
+    renderServices(filtered);
+}
+
+// Replace your renderServices function:
+function renderServices(servicesToRender = null) {
+    const grid = document.getElementById('services-grid');
+    
+    // If no services to render provided, filter based on current category
+    if (!servicesToRender) {
+        if (currentCategory === 'all') {
+            servicesToRender = services;
+        } else {
+            servicesToRender = services.filter(s => s.category === currentCategory);
+        }
+    }
+    
+    console.log(`Rendering ${servicesToRender.length} services for category ${currentCategory}`);
+    
+    if (servicesToRender.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-cart" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                <i class="fas fa-search" style="font-size: 3rem; color: #c39a6b; opacity: 0.3;"></i>
+                <p style="color: #8b5a2b; margin-top: 1rem;">No services found in this category</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = servicesToRender.map(service => `
+        <div class="service-card" onclick="addToCart(${service.id})">
+            <img src="${service.imageUrl}" alt="${service.name}" class="service-image" 
+                 onerror="this.src='https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400'">
+            <div class="service-info">
+                <div class="service-name">${service.name}</div>
+                <div class="service-price">₹${service.price}</div>
+            </div>
+            ${service.discount > 0 ? `<span class="discount-badge">${service.discount}% OFF</span>` : ''}
+        </div>
+    `).join('');
+}
+
+// Make sure your loadDemoServices function also sets categories properly:
+function loadDemoServices() {
+    services = [
+        { id: 101, name: 'Premium Hair Cut', price: 499, sku: 'HC001', imageUrl: 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400', discount: 10, category: 'hair' },
+        { id: 102, name: 'Beard Styling', price: 199, sku: 'BT001', imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400', discount: 0, category: 'beard' },
+        { id: 103, name: 'Hair Spa Treatment', price: 999, sku: 'HS001', imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=400', discount: 15, category: 'spa' },
+        { id: 104, name: 'Gold Facial', price: 1499, sku: 'FC001', imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400', discount: 20, category: 'skin' },
+        { id: 105, name: 'Hair Color', price: 1999, sku: 'HC002', imageUrl: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400', discount: 10, category: 'hair' },
+        { id: 106, name: 'Manicure', price: 399, sku: 'MN001', imageUrl: 'https://images.unsplash.com/photo-1610992015732-2449b0bb0a86?w=400', discount: 5, category: 'skin' },
+        { id: 107, name: 'Pedicure', price: 499, sku: 'PD001', imageUrl: 'https://images.unsplash.com/photo-1519010470956-6d877008eaa4?w=400', discount: 5, category: 'skin' },
+        { id: 108, name: 'Facial Cleanup', price: 299, sku: 'CL001', imageUrl: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=400', discount: 0, category: 'skin' },
+        { id: 109, name: 'Aroma Massage', price: 1499, sku: 'MS001', imageUrl: 'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400', discount: 10, category: 'spa' },
+        { id: 110, name: 'Threading', price: 99, sku: 'TH001', imageUrl: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400', discount: 0, category: 'skin' },
+        { id: 111, name: 'Waxing', price: 399, sku: 'WX001', imageUrl: 'https://images.unsplash.com/photo-1515685251707-27c47aacb84a?w=400', discount: 10, category: 'skin' },
+        { id: 112, name: 'Bridal Makeup', price: 4999, sku: 'BM001', imageUrl: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400', discount: 15, category: 'skin' }
+    ];
+    
+    console.log('Demo services loaded:', services);
+}
+
+// Make sure all functions are globally available
+window.filterByCategory = filterByCategory;
+window.addToCart = addToCart;
+window.updateQuantity = updateQuantity;
+window.removeFromCart = removeFromCart;

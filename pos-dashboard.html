@@ -15,7 +15,7 @@
         <header class="pos-header">
             <div class="logo">
                 <i class="fas fa-cut"></i>
-                <h1>Unisex Salon POS</h1>
+                <h1>Smart Look Salon</h1>
             </div>
             <div class="header-right">
                 <div class="search-box">
@@ -65,23 +65,27 @@
                 </div>
             
                 <!-- Customer Details Section (New) -->
-                <div class="customer-details-section">
-                    <h3><i class="fas fa-user"></i> Customer Details</h3>
-                    <div class="customer-input-group">
-                        <input type="text" id="cart-customer-name" placeholder="Customer Name" class="customer-input">
-                        <input type="tel" id="cart-customer-phone" placeholder="Mobile Number" maxlength="10"
-                            class="customer-input">
-                    </div>
-                    <div class="customer-input-group">
-                        <select id="cart-staff-name" class="customer-input">
-                            <option value="">Select Staff</option>
-                            <option value="Amit (Hair Stylist)">Amit (Hair Stylist)</option>
-                            <option value="Priya (Beautician)">Priya (Beautician)</option>
-                            <option value="Raj (Barber)">Raj (Barber)</option>
-                            <option value="Neha (Spa Specialist)">Neha (Spa Specialist)</option>
-                        </select>
-                    </div>
-                </div>
+                <!-- Customer Details Section (Updated with IDs) -->
+<div class="customer-details-section">
+    <h3><i class="fas fa-user"></i> Customer Details</h3>
+    <div class="flex gap-3">
+        <div class="customer-input-group w-1/2">
+            <input type="text" id="cart-customer-name" placeholder="Customer Name" class="customer-input">
+        </div>
+        <div class="customer-input-group w-1/2">
+            <input type="tel" id="cart-customer-phone" placeholder="Mobile Number" class="customer-input">
+        </div>
+    </div>
+    <div class="customer-input-group">
+        <select id="cart-staff-name" class="customer-input">
+            <option value="">Select Staff</option>
+            <option value="Amit ">Amit </option>
+            <option value="Priya ">Priya </option>
+            <option value="Raj ">Raj </option>
+            <option value="Neha ">Neha </option>
+        </select>
+    </div>
+</div>
             
                 <div class="cart-summary">
                     <div class="summary-row">
@@ -125,21 +129,7 @@
                         </div>
                     </div>
             
-                    <!-- QR Code Modal (hidden by default) -->
-                    <div id="qr-modal" class="qr-modal" style="display: none;">
-                        <div class="qr-modal-content">
-                            <span class="close-qr">&times;</span>
-                            <h3>Scan to Pay</h3>
-                            <div class="qr-code-container" id="qr-code-container">
-                                <!-- QR code will be generated here -->
-                            </div>
-                            <p class="qr-amount">Amount: ₹<span id="qr-amount">0</span></p>
-                            <p class="qr-instruction">Scan with any UPI app (Google Pay, PhonePe, Paytm)</p>
-                            <button class="qr-paid-btn" id="qr-paid-btn">
-                                <i class="fas fa-check"></i> I Have Paid
-                            </button>
-                        </div>
-                    </div>
+                    
             
                     <button class="checkout-btn" id="checkout-btn">
                         <i class="fas fa-arrow-right"></i> Process Payment
